@@ -1,0 +1,25 @@
+# C++ build output
+build/
+out/
+cmake-build-*/
+CMakeUserPresets.json
+compile_commands.json
+vcpkg_installed/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Isaac Sim / Omniverse
+.cache/
+kit/logs/
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
