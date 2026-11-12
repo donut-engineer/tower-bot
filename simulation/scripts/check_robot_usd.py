@@ -5,19 +5,23 @@ Run from the repo root with Isaac Sim's python, after import_urdf.py:
 
 Checks: 6 expected DOFs, joint limits match the URDF, fixed base, stable rest pose,
 position targets are tracked. Exits non-zero on any failure.
-Targets Isaac Sim 6.2.0 (docker/compose.yaml) (`isaacsim.core.api`).
+Targets Isaac Sim 6.2.0 (docker/compose.yaml). Uses `isaacsim.core.api`, which is deprecated
+in 6.x but still shipped; move to `isaacsim.core.experimental` later.
 """
 
 import argparse
 import math
 import os
+import glob
 import sys
+import traceback
 import xml.etree.ElementTree as ET
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument("--usd", default=os.path.join(REPO, "robot_description/usd/so101.usd"))
+parser.add_argument("--usd", default=os.path.join(REPO, "robot_description/usd"),
+                    help="USD file, or a directory holding exactly one top-level .usd/.usda")
 parser.add_argument("--urdf", default=os.path.join(REPO, "robot_description/urdf/so101_new_calib_camera.urdf"))
 args = parser.parse_args()
 
@@ -61,12 +65,23 @@ def find_prim(stage, under, pred):
     return None
 
 
+def resolve_usd(path):
+    if os.path.isfile(path):
+        return path
+    found = sorted(glob.glob(os.path.join(path, "*.usd")) + glob.glob(os.path.join(path, "*.usda")))
+    if len(found) != 1:
+        raise SystemExit(f"[check] expected one .usd in {path}, found {found}; pass --usd <file>")
+    return found[0]
+
+
 def main():
     expected = urdf_limits(args.urdf)
+    usd = resolve_usd(os.path.abspath(args.usd))
+    print("usd:", usd)
 
     world = World(stage_units_in_meters=1.0, physics_dt=1.0 / 120.0)
     world.scene.add_default_ground_plane()
-    add_reference_to_stage(os.path.abspath(args.usd), ROBOT_PATH)
+    add_reference_to_stage(usd, ROBOT_PATH)
     stage = omni.usd.get_context().get_stage()
 
     root = find_prim(stage, ROBOT_PATH, lambda p: p.HasAPI(UsdPhysics.ArticulationRootAPI))
@@ -130,6 +145,18 @@ def main():
 
 
 if __name__ == "__main__":
-    rc = main()
+    try:
+        rc = main()
+    except SystemExit as e:
+        print(e)
+        rc = 1
+    except Exception:
+        traceback.print_exc()
+        rc = 1
+    print(f"[check] exit {rc}", flush=True)
+    sys.stderr.flush()
+    if rc != 0:
+        # Kit swallowed the exit code on the first run (failure exited 0), so exit hard on failure.
+        os._exit(rc)
     app.close()
-    sys.exit(rc)
+    sys.exit(0)

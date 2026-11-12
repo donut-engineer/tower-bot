@@ -11,7 +11,8 @@ docker/run.sh simulation/scripts/import_urdf.py        # run a script with Isaac
 docker/run.sh --shell                                  # bash inside the container
 ```
 
-- **First run:** the first run pulls about 20 GB and warms the shader caches. Caches are kept in named Docker volumes, so later runs are faster.
+- **First run:** the first run pulls about 20 GB and warms the shader caches. Caches, logs and config are kept on the host in `~/docker/isaac-sim` (override with `ISAAC_CACHE`), so later runs are faster. `run.sh` creates the folders and gives UID 1234 write access to them.
+- **GPU:** the container gets the full NVIDIA driver (`NVIDIA_DRIVER_CAPABILITIES=all`), including Vulkan, which Isaac Sim needs even headless. The host driver must include the graphics libraries, not a compute-only "headless" driver package.
 - **File access:** the container runs as UID 1234, the image's user, which isn't root. It sees the repo read-only. Only `robot_description/usd/` is writable, and `run.sh` grants UID 1234 write access there with ACLs. Anything else that needs writing gets its own mount.
 - **Network:** no ports are published and there's no host networking. The future GUI/livestream service will need `network_mode: host`.
 - **Privileges:** `no-new-privileges` is set and all Linux capabilities are dropped.

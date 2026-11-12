@@ -23,6 +23,14 @@ mkdir -p "$OUT"
 setfacl -R -m u:1234:rwX "$OUT"
 find "$OUT" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
 
+# Isaac Sim caches, logs and config, kept on the host so they persist between runs.
+export ISAAC_CACHE="${ISAAC_CACHE:-$HOME/docker/isaac-sim}"
+for d in cache/main cache/computecache cache/kit logs config data pkg; do
+    mkdir -p "$ISAAC_CACHE/$d"
+done
+setfacl -R -m u:1234:rwX "$ISAAC_CACHE"
+find "$ISAAC_CACHE" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
+
 if [[ "${1:-}" == "--shell" ]]; then
     exec "${COMPOSE[@]}" run --rm --entrypoint bash isaac-sim
 fi
