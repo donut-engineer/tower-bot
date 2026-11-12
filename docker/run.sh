@@ -16,20 +16,25 @@ if ! command -v setfacl >/dev/null; then
     echo "setfacl not found: sudo apt install acl" >&2
     exit 1
 fi
+# Give UID 1234 access to everything under $1 that you own. Only a file's owner can change
+# its ACLs, and files the container created are owned by 1234 already, so skip those.
+grant() {
+    find "$1" -user "$(id -u)" -exec setfacl -m u:1234:rwX {} +
+    find "$1" -user "$(id -u)" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
+}
+
 # The repo is mounted read-only; only robot_description/usd is writable by the container.
 # Grant UID 1234 access there only. New files inherit rwx for 1234 and for you.
 OUT="$REPO/robot_description/usd"
 mkdir -p "$OUT"
-setfacl -R -m u:1234:rwX "$OUT"
-find "$OUT" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
+grant "$OUT"
 
 # Isaac Sim caches, logs and config, kept on the host so they persist between runs.
 export ISAAC_CACHE="${ISAAC_CACHE:-$HOME/docker/isaac-sim}"
 for d in cache/main cache/computecache cache/kit logs config data pkg; do
     mkdir -p "$ISAAC_CACHE/$d"
 done
-setfacl -R -m u:1234:rwX "$ISAAC_CACHE"
-find "$ISAAC_CACHE" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
+grant "$ISAAC_CACHE"
 
 if [[ "${1:-}" == "--shell" ]]; then
     exec "${COMPOSE[@]}" run --rm --entrypoint bash isaac-sim

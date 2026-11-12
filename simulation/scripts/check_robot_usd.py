@@ -21,7 +21,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--usd", default=os.path.join(REPO, "robot_description/usd"),
-                    help="USD file, or a directory holding exactly one top-level .usd/.usda")
+                    help="USD file, or a directory holding exactly one robot USD")
 parser.add_argument("--urdf", default=os.path.join(REPO, "robot_description/urdf/so101_new_calib_camera.urdf"))
 args = parser.parse_args()
 
@@ -68,7 +68,12 @@ def find_prim(stage, under, pred):
 def resolve_usd(path):
     if os.path.isfile(path):
         return path
-    found = sorted(glob.glob(os.path.join(path, "*.usd")) + glob.glob(os.path.join(path, "*.usda")))
+    # Top-level file, or the importer's asset folder layout: <dir>/<name>/<name>.usd
+    found = sorted(
+        glob.glob(os.path.join(path, "*.usd")) + glob.glob(os.path.join(path, "*.usda"))
+        + [f for f in glob.glob(os.path.join(path, "*", "*.usd*"))
+           if os.path.splitext(os.path.basename(f))[0] == os.path.basename(os.path.dirname(f))]
+    )
     if len(found) != 1:
         raise SystemExit(f"[check] expected one .usd in {path}, found {found}; pass --usd <file>")
     return found[0]
