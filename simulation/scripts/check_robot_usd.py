@@ -1,11 +1,11 @@
 """Headless sanity check of the converted SO-ARM101 USD.
 
 Run from the repo root with Isaac Sim's python, after import_urdf.py:
-    ./python.sh simulation/scripts/check_robot_usd.py
+    docker/run.sh simulation/scripts/check_robot_usd.py
 
 Checks: 6 expected DOFs, joint limits match the URDF, fixed base, stable rest pose,
 position targets are tracked. Exits non-zero on any failure.
-Targets Isaac Sim 5.x (`isaacsim.core.api`).
+Targets Isaac Sim 6.2.0 (docker/compose.yaml) (`isaacsim.core.api`).
 """
 
 import argparse

@@ -23,11 +23,11 @@ Fixed frames: `gripper_frame_link` (TCP), `wrist_camera_mount_link`, `wrist_came
 
 ## Regenerating the USD
 
-This needs Isaac Sim 5.x (we run it on a Brev GPU instance). From the repo root:
+This uses the Isaac Sim 6.2.0 container ([`docker/`](../docker/)) on a Linux GPU host such as Brev. From the repo root:
 
 ```bash
-./python.sh simulation/scripts/import_urdf.py      # writes usd/so101.usd
-./python.sh simulation/scripts/check_robot_usd.py  # headless sanity check
+docker/run.sh simulation/scripts/import_urdf.py      # writes usd/so101.usd
+docker/run.sh simulation/scripts/check_robot_usd.py  # headless sanity check
 ```
 
 Isaac Sim version used for the committed USD: _TBD (first Brev run)_.

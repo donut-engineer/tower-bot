@@ -1,0 +1,41 @@
+# Isaac Sim 6.2.0, headless, with this repo mounted at /workspace.
+# Use docker/run.sh rather than calling this directly.
+#
+# Host needs: NVIDIA driver, Docker, NVIDIA Container Toolkit. Native Linux only (not WSL2).
+
+services:
+  isaac-sim:
+    image: nvcr.io/nvidia/isaac-sim:6.2.0
+    user: "1234:1234"              # the image's built-in user
+    network_mode: host             # required later for WebRTC livestream
+    environment:
+      ACCEPT_EULA: "Y"
+      # PRIVACY_CONSENT is left unset (no telemetry consent). Set it to "Y" to opt in.
+    entrypoint: ["/isaac-sim/python.sh"]
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace:rw
+      # Named volumes so shader/asset caches survive between runs (first run is slow).
+      - cache-main:/isaac-sim/.cache
+      - cache-compute:/isaac-sim/.nv/ComputeCache
+      - cache-kit:/isaac-sim/kit/cache
+      - logs:/isaac-sim/.nvidia-omniverse/logs
+      - config:/isaac-sim/.nvidia-omniverse/config
+      - data:/isaac-sim/.local/share/ov/data
+      - pkg:/isaac-sim/.local/share/ov/pkg
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  cache-main:
+  cache-compute:
+  cache-kit:
+  logs:
+  config:
+  data:
+  pkg:
