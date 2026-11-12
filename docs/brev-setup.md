@@ -57,4 +57,26 @@ specific patterns: a narrow filter once hid the only error line.
 
 - **Vulkan still fails** inside the container (`ERROR_INCOMPATIBLE_DRIVER`) even after step 4.
   The URDF import and CUDA (Warp sees the L4) work without it. Rendering, the camera sensor and
-  the GUI will need it.
+  the GUI will need it. WebRTC streaming needs it too, because it streams frames rendered with
+  Vulkan.
+
+  **Next diagnostic.** This checks whether the Vulkan ICD and NVIDIA graphics libraries reach
+  the container:
+  ```bash
+  docker run --rm --gpus all -e NVIDIA_DRIVER_CAPABILITIES=all --entrypoint bash \
+    nvcr.io/nvidia/isaac-sim:6.2.0 -c "ls -l /usr/share/vulkan/icd.d /etc/vulkan/icd.d 2>&1; \
+    ldconfig -p | grep -E 'GLX_nvidia|nvidia-encode|nvcuvid'"
+  nvidia-ctk --version
+  ```
+  - **No `nvidia_icd.json` inside:** the NVIDIA container toolkit isn't passing it through.
+    Fix the toolkit or compose config.
+  - **ICD present:** dig into Isaac Sim's Vulkan logs.
+- **WebRTC streaming (later)** also needs:
+  - `libnvidia-encode-595-server` on the host, for NVENC. It's missing from the compute-only
+    driver, like Vulkan.
+  - `libnvidia-decode-595-server`, which provides `libnvcuvid` and silences the h264 decoder
+    warning.
+  - A separate GUI compose service with `network_mode: host`, since the headless service has
+    no ports.
+
+  Ports: 49100/tcp signalling, 47998/udp media.
