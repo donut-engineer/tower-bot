@@ -1,11 +1,11 @@
 """Convert the SO-ARM101 URDF to USD with the Isaac Sim URDF importer.
 
 Run from the repo root with Isaac Sim's python, e.g.:
-    ./python.sh simulation/scripts/import_urdf.py          # Isaac Sim install
+    docker/run.sh simulation/scripts/import_urdf.py        # Isaac Sim container
     python simulation/scripts/import_urdf.py               # `pip install isaacsim` venv
 
 Idempotent: re-running overwrites the output USD.
-Targets Isaac Sim 5.x (`isaacsim.asset.importer.urdf`).
+Targets Isaac Sim 6.2.0 (docker/compose.yaml) (`isaacsim.asset.importer.urdf`).
 """
 
 import argparse
