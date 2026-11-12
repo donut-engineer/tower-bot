@@ -26,7 +26,7 @@ Fixed frames: `gripper_frame_link` (TCP), `wrist_camera_mount_link`, `wrist_came
 This uses the Isaac Sim 6.2.0 container ([`docker/`](../docker/)) on a Linux GPU host such as Brev. From the repo root:
 
 ```bash
-docker/run.sh simulation/scripts/import_urdf.py      # writes usd/so101.usd
+docker/run.sh simulation/scripts/import_urdf.py      # writes into usd/ (prints the USD path)
 docker/run.sh simulation/scripts/check_robot_usd.py  # headless sanity check
 ```
 

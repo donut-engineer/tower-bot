@@ -15,6 +15,9 @@ services:
       - ALL
     environment:
       ACCEPT_EULA: "Y"             # accepts the NVIDIA Isaac Sim license on your behalf
+      # Expose the graphics (Vulkan) driver too, not just CUDA: Isaac Sim's RTX renderer needs it
+      # even headless.
+      NVIDIA_DRIVER_CAPABILITIES: all
       # PRIVACY_CONSENT is left unset (no telemetry consent). Set it to "Y" to opt in.
     entrypoint: ["/isaac-sim/python.sh"]
     working_dir: /workspace
@@ -23,27 +26,21 @@ services:
       # only the USD output dir is writable.
       - ..:/workspace:ro
       - ../robot_description/usd:/workspace/robot_description/usd:rw
-      # Named volumes so shader/asset caches survive between runs (first run is slow).
-      - cache-main:/isaac-sim/.cache
-      - cache-compute:/isaac-sim/.nv/ComputeCache
-      - cache-kit:/isaac-sim/kit/cache
-      - logs:/isaac-sim/.nvidia-omniverse/logs
-      - config:/isaac-sim/.nvidia-omniverse/config
-      - data:/isaac-sim/.local/share/ov/data
-      - pkg:/isaac-sim/.local/share/ov/pkg
+      # Caches/logs/config live in host dirs under ISAAC_CACHE (default ~/docker/isaac-sim),
+      # created by run.sh and made writable for UID 1234 via ACLs. Named volumes were
+      # root-owned, which broke warp and the Kit data store.
+      - ${ISAAC_CACHE:?run via docker/run.sh}/cache/main:/isaac-sim/.cache:rw
+      - ${ISAAC_CACHE}/cache/computecache:/isaac-sim/.nv/ComputeCache:rw
+      - ${ISAAC_CACHE}/cache/kit:/isaac-sim/kit/cache:rw
+      - ${ISAAC_CACHE}/logs:/isaac-sim/.nvidia-omniverse/logs:rw
+      - ${ISAAC_CACHE}/config:/isaac-sim/.nvidia-omniverse/config:rw
+      - ${ISAAC_CACHE}/data:/isaac-sim/.local/share/ov/data:rw
+      - ${ISAAC_CACHE}/pkg:/isaac-sim/.local/share/ov/pkg:rw
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [gpu, compute, utility, graphics, display]
 
-volumes:
-  cache-main:
-  cache-compute:
-  cache-kit:
-  logs:
-  config:
-  data:
-  pkg:
