@@ -1,0 +1,17 @@
+The files in urdf/ and meshes/ come from the SO-ARM100 project by The Robot Studio:
+
+  https://github.com/TheRobotStudio/SO-ARM100
+  commit a758567c3978dfeefe282ede0500085a48fe8f78
+  path   Simulation/SO101/
+
+They are licensed under the Apache License, Version 2.0 (see LICENSE.upstream).
+
+Files taken:
+  Simulation/SO101/so101_new_calib_camera.urdf -> urdf/so101_new_calib_camera.urdf
+  Simulation/SO101/assets/*.stl (the 15 files the URDF references) -> meshes/
+
+Modifications:
+  urdf/so101_new_calib_camera.urdf: mesh paths changed from "assets/<name>.stl"
+  to "../meshes/<name>.stl". The file is otherwise unchanged.
+
+usd/ is generated from urdf/ by simulation/scripts/import_urdf.py.
