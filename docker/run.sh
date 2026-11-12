@@ -16,11 +16,14 @@ if ! command -v setfacl >/dev/null; then
     echo "setfacl not found: sudo apt install acl" >&2
     exit 1
 fi
-# Give UID 1234 access to everything under $1 that you own. Only a file's owner can change
-# its ACLs, and files the container created are owned by 1234 already, so skip those.
+# Give UID 1234 access to everything under $1 that you own. Anything not yours (files and
+# folders the container created) is pruned, not descended into: it's already the container's,
+# you can't change its ACLs, and its folders may not be readable by you.
 grant() {
-    find "$1" -user "$(id -u)" -exec setfacl -m u:1234:rwX {} +
-    find "$1" -user "$(id -u)" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
+    local me
+    me="$(id -u)"
+    find "$1" ! -user "$me" -prune -o -exec setfacl -m u:1234:rwX {} +
+    find "$1" ! -user "$me" -prune -o -type d -exec setfacl -d -m u:1234:rwx,u:"$me":rwx {} +
 }
 
 # The repo is mounted read-only; only robot_description/usd is writable by the container.
