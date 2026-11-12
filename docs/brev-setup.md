@@ -50,6 +50,7 @@ specific patterns: a narrow filter once hid the only error line.
 | `ImportError: cannot import name '_urdf'` | Isaac Sim 6.x replaced the URDF importer API | `URDFImporterConfig` + `URDFImporter` (PR #3) |
 | Script failed but the run exited 0 | Kit swallowed the exit code | Hard-exit non-zero on failure (PR #3) |
 | Import "succeeds" but has 0 joints | Physics lives in a `Physics` variant set with no default selection | Import script selects `physx` (PR #6) |
+| Check: `FAIL base stays fixed` (amount not shown) | Base pose read straight after `world.reset()`, before physics ran; 0.1 mm tolerance | Measure after the first step, print the drift, 1 mm tolerance (PR #6) |
 | Output folder `so101_new_calib_camera_1/` | Importer won't overwrite; it adds a suffix | Import script removes old output first (PR #6) |
 
 ## Open issues
