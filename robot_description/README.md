@@ -30,4 +30,6 @@ docker/run.sh simulation/scripts/import_urdf.py      # writes into usd/ (prints 
 docker/run.sh simulation/scripts/check_robot_usd.py  # headless sanity check
 ```
 
-Isaac Sim version used for the committed USD: _TBD (first Brev run)_.
+Generated USD: `usd/so101_new_calib_camera/so101_new_calib_camera.usda` (open this file). Physics is in a `Physics` variant set and defaults to `physx`.
+
+Isaac Sim version used for the committed USD: **6.2.0** (`nvcr.io/nvidia/isaac-sim:6.2.0`, URDF importer 3.11.12). `check_robot_usd.py` passes on it.
