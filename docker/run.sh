@@ -5,8 +5,8 @@
 #   docker/run.sh simulation/scripts/check_robot_usd.py
 #   docker/run.sh --shell      # bash inside the container
 #
-# The container runs as UID 1234, so this grants that UID write access to the repo
-# via ACLs (needs the `acl` package: sudo apt install acl). Your own permissions are unchanged.
+# The container runs as UID 1234 and sees the repo read-only, except robot_description/usd,
+# which this grants UID 1234 write access to via ACLs (needs: sudo apt install acl).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,9 +16,12 @@ if ! command -v setfacl >/dev/null; then
     echo "setfacl not found: sudo apt install acl" >&2
     exit 1
 fi
-# Existing files and dirs: rwX for 1234. New files: inherit rwx for 1234 and for you.
-setfacl -R -m u:1234:rwX "$REPO"
-find "$REPO" -type d -not -path '*/.git/*' -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
+# The repo is mounted read-only; only robot_description/usd is writable by the container.
+# Grant UID 1234 access there only. New files inherit rwx for 1234 and for you.
+OUT="$REPO/robot_description/usd"
+mkdir -p "$OUT"
+setfacl -R -m u:1234:rwX "$OUT"
+find "$OUT" -type d -exec setfacl -d -m u:1234:rwx,u:"$(id -u)":rwx {} +
 
 if [[ "${1:-}" == "--shell" ]]; then
     exec "${COMPOSE[@]}" run --rm --entrypoint bash isaac-sim

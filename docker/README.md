@@ -12,5 +12,8 @@ docker/run.sh --shell                                  # bash inside the contain
 ```
 
 - **First run:** the first run pulls about 20 GB and warms the shader caches. Caches are kept in named Docker volumes, so later runs are faster.
-- **File access:** the container runs as UID 1234, the image's user. `run.sh` uses ACLs to give that UID write access to the repo, so generated files such as `robot_description/usd/` land in your checkout.
+- **File access:** the container runs as UID 1234, the image's user, which isn't root. It sees the repo read-only. Only `robot_description/usd/` is writable, and `run.sh` grants UID 1234 write access there with ACLs. Anything else that needs writing gets its own mount.
+- **Network:** no ports are published and there's no host networking. The future GUI/livestream service will need `network_mode: host`.
+- **Privileges:** `no-new-privileges` is set and all Linux capabilities are dropped.
+- **License:** `ACCEPT_EULA=Y` accepts NVIDIA's Isaac Sim license on your behalf.
 - **Telemetry:** `PRIVACY_CONSENT` is not set, so you don't opt in to telemetry.
