@@ -9,9 +9,13 @@ Targets Isaac Sim 6.2.0 (docker/compose.yaml): `URDFImporterConfig` + `URDFImpor
 """
 
 import argparse
+import glob
 import os
+import re
+import shutil
 import sys
 import traceback
+import xml.etree.ElementTree as ET
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -21,6 +25,9 @@ parser.add_argument("--out-dir", default=os.path.join(REPO, "robot_description/u
 # Placeholder drive gains (SI units). Tuned to the STS3215 later.
 parser.add_argument("--stiffness", type=float, default=100.0, help="N*m/rad")
 parser.add_argument("--damping", type=float, default=5.0, help="N*m*s/rad")
+# The importer writes physics into a "Physics" variant set (none/physics/physx/mujoco) with no
+# default selection, which leaves the robot without joints. Select one as the default.
+parser.add_argument("--physics", default="physx", choices=["physx", "physics", "mujoco", "none"])
 args = parser.parse_args()
 
 # SimulationApp must start before any omni/pxr import.
@@ -39,6 +46,14 @@ def main() -> int:
         print(f"[import_urdf] URDF not found: {urdf}")
         return 1
     os.makedirs(out_dir, exist_ok=True)
+
+    # The importer writes <out_dir>/<robot name>/ and picks <name>_1, _2, ... if that exists.
+    # Remove earlier output so re-runs replace it.
+    name = ET.parse(urdf).getroot().get("name")
+    for d in glob.glob(os.path.join(out_dir, name + "*")):
+        if os.path.isdir(d) and re.fullmatch(re.escape(name) + r"(_\d+)?", os.path.basename(d)):
+            print(f"[import_urdf] removing old output {d}")
+            shutil.rmtree(d)
 
     cfg = URDFImporterConfig(
         urdf_path=urdf,
@@ -59,6 +74,14 @@ def main() -> int:
     print(f"[import_urdf] imported {urdf} -> {usd_path}")
 
     stage = Usd.Stage.Open(usd_path)
+    vset = stage.GetDefaultPrim().GetVariantSets().GetVariantSet("Physics")
+    if args.physics not in vset.GetVariantNames():
+        print(f"[import_urdf] no '{args.physics}' physics variant; found {vset.GetVariantNames()}")
+        return 1
+    vset.SetVariantSelection(args.physics)
+    stage.GetRootLayer().Save()
+    print(f"[import_urdf] default physics variant: {args.physics}")
+
     n = sum(1 for p in stage.Traverse() if p.IsA(UsdPhysics.RevoluteJoint))
     print(f"[import_urdf] revolute joints in output: {n}")
     if n != 6:
